@@ -314,6 +314,11 @@ class Mirror(object):
       self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/main'], cwd=tempdir)
       # A quick validation that all references are valid.
       self.RunGit(['for-each-ref'], cwd=tempdir)
+      try:
+        self.RunGit(['show-ref','refs/heads/main'], cwd=tempdir)
+      except Exception as x:
+        self.print('bootstrap_repo: refs/heads/main does not seem to exist; setting HEAD to refs/heads/master instead')
+        self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/master'], cwd=tempdir)
     except Exception as e:
       self.print('Encountered error: %s' % str(e), file=sys.stderr)
       gclient_utils.rmtree(tempdir)
@@ -417,6 +422,13 @@ class Mirror(object):
         # everywhere.
         self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/main'],
                     cwd=self.mirror_path)
+
+        self.RunGit(['for-each-ref'], cwd=self.mirror_path)
+        try:
+          self.RunGit(['show-ref','refs/heads/main'], cwd=self.mirror_path)
+        except Exception as x:
+          self.print('_ensure_bootstrapped: refs/heads/main does not seem to exist; setting HEAD to refs/heads/master instead')
+          self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/master'],cwd=self.mirror_path)
       else:
         # Bootstrap failed, previous cache exists; warn and continue.
         logging.warning(
